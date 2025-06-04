@@ -73,55 +73,55 @@ class Player:
             proposed_rect.x += self.speed / 1.44
             self.current_animation = self.animations["right"]
             self.last_direction = "right"
-            print("rightup diagonal")
+            #print("rightup diagonal")
         elif keys[pygame.K_w] and keys[pygame.K_a]:
             proposed_rect.y -= self.speed / 1.44
             proposed_rect.x -= self.speed / 1.44
             self.current_animation = self.animations["left"]
             self.last_direction = "left"
-            print("left up diagonal")
+            #print("left up diagonal")
         elif keys[pygame.K_s] and keys[pygame.K_a]:
             proposed_rect.y += self.speed / 1.44
             proposed_rect.x -= self.speed / 1.44
             self.current_animation = self.animations["left"]
             self.last_direction = "left"
-            print("left down diagonal")
+            #print("left down diagonal")
         elif keys[pygame.K_s] and keys[pygame.K_d]:
             proposed_rect.y += self.speed / 1.44
             proposed_rect.x += self.speed / 1.44
             self.current_animation = self.animations["right"]
             self.last_direction = "right"
-            print("right down diagonal")
+            #print("right down diagonal")
         elif keys[pygame.K_a]:
             proposed_rect.x -= self.speed
             self.current_animation = self.animations["left"]
             self.last_direction = "left"
-            print("Moving left")
+            #print("Moving left")
         elif keys[pygame.K_d]:
             proposed_rect.x += self.speed
             self.current_animation = self.animations["right"]
             self.last_direction = "right"
-            print("Moving right")
+            #print("Moving right")
         elif keys[pygame.K_w]:
             proposed_rect.y -= self.speed
             self.current_animation = self.animations["up"]
             self.last_direction = "up"
-            print("Moving up")
+            #print("Moving up")
         elif keys[pygame.K_s]:
             proposed_rect.y += self.speed
             self.current_animation = self.animations["down"]
             self.last_direction = "down"
-            print("Moving down")
+            #print("Moving down")
         else:
             # Set idle animation based on the last direction
             self.current_animation = self.animations[f"idle_{self.last_direction}"]
-            print("Idle")
+            #print("Idle")
 
         # Check for collisions with obstacles using their collision_rect
-        if not any(proposed_rect.colliderect(obstacle.collision_rect) for obstacle in obstacles):
+        if not any(proposed_rect.colliderect(obstacle.collision_rect) for obstacle in obstacles if hasattr(obstacle, 'collision_rect')):
             # If no collision, update the player's position
             self.rect = proposed_rect
-        self.collision_rect.topleft = self.rect.topleft
+        self.collision_rect.topleft = self.rect.topleft  # Ensure collision_rect is updated
         if self.current_animation != previous_animation:
             self.current_frame = 0
 
