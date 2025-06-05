@@ -39,6 +39,8 @@ class Game:
         self.guessing_mode = False
         self.guess = {"npc": None, "weapon": None, "location": None}
     # player pixels
+        self.house_npcs = []  # Store house-specific NPCs
+        self.forest_npcs = []  # Store forest-specific NPCs
         self.player = Player(
             "assets/images/characters/MC.png", 
             714,  # X position
@@ -72,15 +74,14 @@ class Game:
         pygame.draw.rect(self.screen, (255, 0, 0), HOUSE_RECT, 2)  # Red outline for the house
         pygame.draw.rect(self.screen, (0, 255, 0), FOREST_RECT, 2)  # Green outline for the forest
 
-
     def display_dialog(self, dialog, npc_name=None):
         if not dialog or len(dialog) == 0:
             print("No dialog to display!")
             return
-        
+        pink = (222, 93, 131)  # Define the pink color for the text box
         print(f"Displaying dialog: {dialog}")  # Debugging statement
         text_box = pygame.Rect(50, SCREEN_HEIGHT - 100, SCREEN_WIDTH - 100, 50)
-        self.screen.fill(DARK_RED, text_box)  # Clear the text box
+        self.screen.fill(pink, text_box)  # Clear the text box
         pygame.draw.rect(self.screen, (255, 255, 255), text_box, 2)
         text_surface = self.dialog_font.render(dialog, True, (255, 255, 255))
         self.screen.blit(text_surface, (text_box.x + 10, text_box.y + 10))
@@ -99,7 +100,7 @@ class Game:
                 if event.type == pygame.KEYDOWN and event.key == pygame.K_TAB:
                     return  # Exit the dialog early if Tab is pressed
 
-    def load_npcs(self):
+    def init_npcs(self):
         innocent_dialog = [
             "I saw {murderer} near the {location} earlier.",
             "That {weapon} looks dangerous, don’t you think?",
@@ -131,8 +132,8 @@ class Game:
             "That {weapon} could easily have been used for something bad.",
             "You never know what {murderer} is really up to.",
             "The {location} has a dark past, just like {murderer}.",
-            "I wouldn’t be surprised if the {weapon} was planted there.",
-    ]
+            "I wouldn’t be surprised if the {weapon} was planted there.", 
+            ]
         murderer_dialog = [
             "Funny how everyone’s so quick to jump to conclusions these days.",
             "Sometimes, the quietest places hide the loudest secrets.",
@@ -145,6 +146,16 @@ class Game:
             "You never really know what someone is capable of.",
             "Rumors spread faster than facts, especially in places like {location}.",
         ]
+#ginger boy
+        self.gingerBoy = NPC ("Ginger Boy",
+            "assets/images/characters/npcGingerBoy.png", 
+                531, 391,
+                5, (50, 50), (32, 35),
+                dialog=[ "I like the color blue",]
+        )
+        self.house_obstacles.append(self.gingerBoy)
+        self.house_npcs.append(self.gingerBoy)
+#green Twin
         self.greenTwin = NPC( "Green Twin",
             "assets/images/characters/npcGreenTwin.png", 
                 710, 331, 
@@ -152,42 +163,54 @@ class Game:
                  dialog=[ None 
                 ] 
         )
+        self.main_obstacles.append(self.greenTwin)
+        self.forest_npcs.append(self.greenTwin)
+#pink Twin
         self.pinkTwin = NPC( "Pink Twin",
             "assets/images/characters/npcPinkTwin.png", 
                 613, 953, 
                 5, (50, 50), (32, 35), 
                 dialog= None 
         )
+        self.main_obstacles.append(self.pinkTwin)
+        self.forest_npcs.append(self.pinkTwin)
+        # Load NPCs into the gam
         
-        self.npcList = [self.greenTwin, self.pinkTwin]
-        self.npcList_names = [self.greenTwin.name, self.pinkTwin.name]  # Store NPC names for dialo
+        self.npcList = [self.greenTwin, self.pinkTwin, self.gingerBoy]  # Initialize NPC list with all NPCs
+        self.npcList_names = [self.greenTwin.name, self.pinkTwin.name,self.gingerBoy.name]  # Store NPC names for dialo
         self.murderer = random.choice(self.npcList_names)
         print(f"Random murderer selected: {self.murderer}")
-        
-        
+         
         if self.murderer != self.greenTwin.name: 
-            self.greenTwin.dialog = innocent_dialog
+            self.greenTwin.dialog.extend(innocent_dialog)
         else:  
-            self.greenTwin.dialog = murderer_dialog
+            self.greenTwin.dialog.extend(murderer_dialog)
             
         if self.murderer != self.pinkTwin.name: 
-            self.pinkTwin.dialog = innocent_dialog
+            self.pinkTwin.dialog.extend(innocent_dialog)
         else:  
-            self.pinkTwin.dialog = murderer_dialog
+            self.pinkTwin.dialog.extend(murderer_dialog)
+               
+        if self.murderer != self.gingerBoy.name: 
+            self.gingerBoy.dialog.extend(innocent_dialog)
+        else:  
+            self.gingerBoy.dialog.extend(murderer_dialog)
 
-          
+# Loading things        
+    def load_npcs(self):
+        self.init_npcs()
+   
     def load_items(self):
-        # loading fork and knife into locations
 
-        # Randomly select weapon and location
         self.item_names = ["Fork", "Knife"]
         self.weapon = random.choice(self.item_names)
-        location_names = ["house", "forest"]
-        self.weapon_location = random.choice(location_names)
-        print(f"Random Weapon selected: {self.weapon} location: {self.weapon_location}")   
+        self.location_names = ["house", "forest"]
+        self.weapon_location = random.choice(self.location_names)
+        print(f"Random Weapon selected: {self.weapon} location: {self.weapon_location}") 
+#where weapons are located  
         if self.weapon == "Fork":
             if self.weapon_location == "forest":
-                self.fork = Item("Fork", "kind of pointy, looks like it was hidden", "assets/images/items/fork.png", 822, 413)
+                self.fork = Item("Fork", "kind of pointy, looks like it was hidden", "assets/images/items/fork.png", 485, 358)
                 self.main_obstacles.append(self.fork)
             elif self.weapon_location == "house":
                 self.fork = Item("Fork", "kinda of pointy, looks used.", "assets/images/items/fork.png", 300, 400)
@@ -196,7 +219,8 @@ class Game:
                 self.fork = Item("Fork", "Brand new", "assets/images/items/fork.png", 400, 413)
         elif self.weapon == "Knife":
             if self.weapon_location == "forest":
-                self.knife = Item("Knife", "it was tossed into the grass", "assets/images/items/knife.png", 714, 1095)
+                self.knife = Item("Knife", "it was tossed into the grass", "assets/images/items/knife.png", 435, 955)
+                self.main_obstacles.append(self.knife)
             elif self.weapon_location == "house":
                 self.knife = Item("Knife", "it was used to cut things recently", "assets/images/items/knife.png", 360, 195)
                 self.house_obstacles.append(self.knife)
@@ -212,7 +236,7 @@ class Game:
         self.HouseWallsBotRight = HouseWalls("assets/backgrounds/house/HouseWalls/HouseWallsBotRight.png", 400, 605, 300, 120)
         self.HousewallsMidLeft = HouseWalls("assets/backgrounds/house/HouseWalls/HouseWallsMidLeft.png", 0, 290, 300, 70)
         self.HousewallsMidRight = HouseWalls("assets/backgrounds/house/HouseWalls/HouseWallsMidRight.png", 400, 290, 300, 70)
-        self.HousewallsMid = HouseWalls("assets/backgrounds/house/HouseWalls/HouseWallsMid.png", 400, 190, 48, 120)
+        self.HousewallsMid = HouseWalls("assets/backgrounds/house/HouseWalls/HouseWallsMid.png", 400, 190, 50, 120)
         
         self.house_obstacles.extend([
             self.HouseWallsLeft,
@@ -280,9 +304,13 @@ class Game:
         self.load_trees_and_bushes()  # Load trees and bushes
         self.house = House("assets/images/environment/house.png", *HOUSE_POSITION, 80, 94)
         # Initially set obstacles to forest obstacles
-        self.main_obstacles.extend(self.trees + self.bushes + [self.house] + self.npcList)
+        self.npcList.clear()  # Remove house NPCs
+        self.npcList.extend(self.forest_npcs)  # Add forest NPCs dynamically
+
+        self.main_obstacles.extend(self.trees + self.bushes + [self.house])
         self.obstacles = self.main_obstacles
 
+# Set up the background and path images with scaling
     def setup_background_and_scaling(self, background_path, path_path):
         """Set up the background and path images with scaling."""
     #load the background image
@@ -303,12 +331,13 @@ class Game:
         self.setup_background_and_scaling("assets/backgrounds/house/Housefloors.png", "assets/backgrounds/house/Housefloors.png")
         self.obstacles = self.house_obstacles
         self.load_housewalls()  # Load house walls
-        # Add house walls to house_obstacles so they are drawn and used for collision
-
+        self.npcList.clear()
+        self.npcList.extend(self.house_npcs)  # Add forest NPCs dynamically
+        
         self.player.rect.topleft = (325, 612)
         for npc in self.npcList:
             self.npc_positions[npc] = npc.rect.topleft
-        self.npcList.clear() #removing ig they are in forrest
+         #removing ig they are in forrest
     # Set player position
         
         print("New setting loaded!")
@@ -317,6 +346,8 @@ class Game:
         print("Returning to forest...")
         self.setup_background_and_scaling("assets/backgrounds/forrest/forrest.png", "assets/backgrounds/forrest/path.png")
         self.obstacles = self.main_obstacles
+        self.npcList.clear()
+        self.npcList.extend(self.forest_npcs)
         for npc in self.npc_positions:
             npc.rect.topleft = self.npc_positions[npc]
         self.npcList.extend([self.greenTwin, self.pinkTwin])
@@ -341,7 +372,7 @@ class Game:
             print("Transitioning to forest...")
             self.load_forest_from_house()
             return True
-  
+
 #Handle key events                  
     def handle_keydown(self,event):
         if event.key == pygame.K_RETURN:
@@ -363,15 +394,26 @@ class Game:
     def handle_dialog(self):
         for npc in self.npcList:
             if self.player.rect.colliderect(npc.rect):  # Check if player is near an NPC
+                if npc.interaction_count >= 4:  # Limit interactions to 4 for this specific NPC
+                    # Display a fixed dialog after the 4th interaction
+                    self.display_dialog("I have nothing else to say.", npc_name=npc.name)
+                    print(f"{npc.name} has no dialog left.")  # Debugging message
+                    return
+                
                 dialog = random.choice(npc.dialog)  # Select a random dialog from the NPC's dialog list
                 if dialog:  # Ensure dialog is not None
                     try:
                         # Format the dialog with the correct keys
                         formatted_dialog = dialog.format(murderer=self.murderer, weapon=self.weapon, location=self.weapon_location)
                         self.display_dialog(formatted_dialog, npc_name=npc.name)
+                        npc.dialog.remove(dialog)
                     except KeyError as e:
                         print(f"Error formatting dialog: {e}")
                         self.display_dialog("Something seems off with the dialog.", npc_name=npc.name)
+                
+                npc.interaction_count += 1  # Increment interaction count for this NPC
+                print(f"{npc.name} interaction count: {npc.interaction_count}")
+ 
     def handle_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -401,55 +443,100 @@ class Game:
             self.inventoryOpen = not self.inventoryOpen
         elif event.key == pygame.K_g:
             self.guessing_mode = not self.guessing_mode
-            if self.guessing_mode:
-                print("Guessing mode enabled. Press G again to disable.")
-            else:
-                print("Guessing mode disabled.")
         elif event.key == pygame.K_ESCAPE:
             self.running = False if not self.inventoryOpen else self.close_inventory()
             
     def draw_guessing_ui(self):
         guessingBox = pygame.Rect(50, 50, SCREEN_WIDTH - 100, SCREEN_HEIGHT - 100)
-        pygame.draw.rect(self.screen, (130, 110, 150), guessingBox)  # Background color
+        pygame.draw.rect(self.screen, (178, 156, 162), guessingBox)  # Background color for the guessing box
         pygame.draw.rect(self.screen, (255, 255, 255), guessingBox, 2)  # Border color
-
-    # Display instructions
         instructions = self.dialog_font.render("Press keys to guess: NPC (1/2), Weapon (3/4), Location (5/6)", True, (255, 255, 255))
-        self.screen.blit(instructions, (guessingBox.x + 10, guessingBox.y + 10))
+        
+        instructions_width, instructions_height = instructions.get_size()
+        instructions_x = guessingBox.x + (guessingBox.width - instructions_width) // 2
+        instructions_y = guessingBox.y + 10  # Add a small vertical margin
+        self.screen.blit(instructions, (instructions_x, instructions_y))
 
-    # Display current guess
+
         current_guess = f"NPC: {self.guess['npc']}, Weapon: {self.guess['weapon']}, Location: {self.guess['location']}"
         guess_text = self.dialog_font.render(current_guess, True, (255, 255, 255))
-        self.screen.blit(guess_text, (guessingBox.x + 10, guessingBox.y + 50))    
+
+        text_width, text_height = guess_text.get_size()
+        text_x = guessingBox.x + (guessingBox.width - text_width) // 2
+        text_y = guessingBox.y + (guessingBox.height - text_height) // 2
+        self.screen.blit(guess_text, (text_x, text_y))
         
     def handle_guess(self, events):
+        if 'npc_index' not in self.__dict__:
+            self.npc_index = 0  
+        if 'weapon_index' not in self.__dict__:
+            self.weapon_index = 0
+        if 'location_index' not in self.__dict__:
+            self.location_index = 0
+    
         if not self.guessing_mode:
             return
+    
+        # Track the current category being guessed
+        if 'current_category' not in self.__dict__:
+            self.current_category = None  # None means no category selected   
         for event in events:
             if event.type == pygame.KEYDOWN:
+                # Select category
                 if event.key == pygame.K_1:
-                    self.guess['npc'] = self.npcList_names[0]
+                    self.current_category = "npc"
+                   # print("NPC category selected. Use left/right arrows to scroll.")
                 elif event.key == pygame.K_2:
-                    self.guess['npc'] = self.npcList_names[1]
+                    self.current_category = "weapon"
+                   # print("Weapon category selected. Use left/right arrows to scroll.")
                 elif event.key == pygame.K_3:
-                    self.guess['weapon'] = "Fork"
-                elif event.key == pygame.K_4:
-                    self.guess['weapon'] = "Knife"
-                elif event.key == pygame.K_5:
-                    self.guess['location'] = "House"
-                elif event.key == pygame.K_6:
-                    self.guess['location'] = "Forest"
+                    self.current_category = "location"
+                   # print("Location category selected. Use left/right arrows to scroll.")
+
+                elif event.key == pygame.K_LEFT:
+                    if self.current_category == "npc":
+                        self.npc_index = (self.npc_index - 1) % len(self.npcList_names)
+                        self.guess['npc'] = self.npcList_names[self.npc_index]
+                    elif self.current_category == "weapon":
+                        self.weapon_index = (self.weapon_index - 1) % len(self.item_names)
+                        self.guess['weapon'] = self.item_names[self.weapon_index]
+                    elif self.current_category == "location":
+                        self.location_index = (self.location_index - 1) % len(self.location_names)
+                        self.guess['location'] = self.location_names[self.location_index]
+                elif event.key == pygame.K_RIGHT:
+                    if self.current_category == "npc":
+                        self.npc_index = (self.npc_index + 1) % len(self.npcList_names)
+                        self.guess['npc'] = self.npcList_names[self.npc_index]
+                    elif self.current_category == "weapon":
+                        self.weapon_index = (self.weapon_index + 1) % len(self.item_names)
+                        self.guess['weapon'] = self.item_names[self.weapon_index]
+                    elif self.current_category == "location":
+                        self.location_index = (self.location_index + 1) % len(self.location_names)
+                        self.guess['location'] = self.location_names[self.location_index]
+    
+                # Confirm guess
                 elif event.key == pygame.K_RETURN:
                     self.check_guess()
                     
-    def display_message(self, message, color=(255, 255, 255)):
+    def display_message(self, message, color=None):
         """Display a message on the screen."""
-        message_font = pygame.font.Font(None, 50)  # Create a font object
-        message_surface = message_font.render(message, True, color)  # Render the message
-        message_rect = message_surface.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2))  # Center the message
-        self.screen.blit(message_surface, message_rect)  # Draw the message on the screen
-        pygame.display.update()  # Update the display
-        pygame.time.delay(2000)  # Pause for 2 seconds to show the message
+        message_font = pygame.font.Font(None, 50)
+        message_surface = message_font.render(message, True, color)
+        message_rect = message_surface.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2))
+
+        box_width = message_rect.width + 40  # Add padding to the box width
+        box_height = message_rect.height + 20  # Add padding to the box height
+        box_x = message_rect.x - 20  # Adjust box position for padding
+        box_y = message_rect.y - 10  # Adjust box position for padding
+        box_rect = pygame.Rect(box_x, box_y, box_width, box_height)
+        
+        pygame.draw.rect(self.screen, (0, 0, 0), box_rect)  # Black fill
+        pygame.draw.rect(self.screen, (178, 156, 162), box_rect, 2)  # White border
+ 
+        self.screen.blit(message_surface, message_rect)
+        pygame.display.update()
+        pygame.time.delay(2000)
+
         
     def check_guess(self):
         print(f"Player's guess: NPC={self.guess['npc']}, Weapon={self.guess['weapon']}, Location={self.guess['location']}")
@@ -458,14 +545,13 @@ class Game:
         if (self.guess["npc"].lower() == self.murderer.lower() and
             self.guess["weapon"].lower() == self.weapon.lower() and
             self.guess["location"].lower() == self.weapon_location.lower()):
-                self.display_message("yayyyy you are correct", color=(DARK_RED))
+                self.display_message("yayyyy you are correct", color=(157, 193, 131))
                 print("wooooo! you solved it")
                 self.guessing_mode = False    
         else:
             print("hmm something seems wrong. try again")
-            self.display_message("Hmm, something seems wrong. Try again.", color=(DARK_RED))
-        
-            
+            self.display_message("Hmm, something seems wrong. Try again.", color=(224, 33, 138))
+                  
     def handle_item_pickup(self):
         for obstacle in self.obstacles:
             if isinstance(obstacle, Item) and obstacle.rect and self.player.rect.colliderect(obstacle.rect):
@@ -508,16 +594,15 @@ class Game:
         self.player.rect.left = max(self.player.rect.left, 0)
         self.player.rect.top = max(self.player.rect.top, 0)
         self.player.rect.right = min(self.player.rect.right, self.forrest.get_width())
-        self.player.rect.bottom = min(self.player.rect.bottom, self.forrest.get_height())
-
-#PLAYER POSITION
-        print(f"Player position: ({self.player.rect.x}, {self.player.rect.y})")
+        self.player.rect.bottom = min(self.player.rect.bottom, self.forrest.get_height())#PLAYER POSITION
 
     # Update animation
         dt = self.clock.get_time()
         self.player.update_animation(dt)
         for npc in self.npcList:
             npc.update_animation(dt)
+        for npc in self.house_npcs:
+            npc.update_animation(dt) 
 
     # Restrict the camera to the boundaries of the background
         self.camera_offset[0] = max(0, min(self.player.rect.centerx - SCREEN_WIDTH // 2, self.forrest.get_width() - SCREEN_WIDTH))
@@ -560,10 +645,11 @@ class Game:
         while self.running:
             events = pygame.event.get()
             self.handle_events(events)
+            #print(f"Player position: ({self.player.rect.x}, {self.player.rect.y})")
 
             if self.guessing_mode:
             # Draw only the guessing UI
-                self.screen.fill((0, 0, 0))  # Clear the screen (black background)
+                #self.screen.fill((0, 0, 0))  # Clear the screen (black background)
                 self.draw_guessing_ui()
                 self.handle_guess(events)
             else:

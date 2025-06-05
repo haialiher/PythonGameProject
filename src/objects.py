@@ -79,5 +79,3 @@ class Inventory:
             screen.blit(textSurface, (inventoryBox.x + 60, inventoryBox.y + y_offset))  # Adjust text position
             y_offset += 50  # Increase spacing for larger image
         
-
-

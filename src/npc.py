@@ -28,6 +28,7 @@ class NPC:
         self.frame_width, self.frame_height = frame_size
         self.name = name
         self.scale = scale
+        self.interaction_count = 0
         self.animations = {
             "down": self.extract_frames(0, 7),
             "up": self.extract_frames(1, 7),
