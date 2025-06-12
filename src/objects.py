@@ -16,8 +16,21 @@ class Bush:
         self.image = pygame.transform.scale(self.image, (width, height))
         self.rect = pygame.Rect(x, y, width, height)
         # Shrink the collision rectangle to allow closer walking
-        self.collision_rect = self.rect.inflate(-40, -36)  # Adjust values as needed
-        
+        self.collision_rect = self.rect.inflate(-40, -36)  # Adjust values as needed  
+
+class Furniture:
+    def __init__(self, image_path, x, y, width, height):
+        self.image = pygame.image.load(image_path)
+        self.image = pygame.transform.scale(self.image, (width, height))
+        self.rect = pygame.Rect(x, y, width, height)
+        self.collision_rect = self.rect.inflate(-40, -50)
+class Bed:
+    def __init__(self, image_path, x, y, width, height):
+        self.image = pygame.image.load(image_path)
+        self.image = pygame.transform.scale(self.image, (width, height))
+        self.rect = pygame.Rect(x, y, width, height)
+        self.collision_rect = self.rect.inflate(-20, -40)
+ 
 class Item: 
     def __init__(self, name, description, image_path, x=None, y=None):
         self.name = name
@@ -46,7 +59,19 @@ class House:
         # Check if the player interacts with the house
         if self.collision_rect.colliderect(player_rect):
             self.enter_callback()  # Trigger the transition to another setting
-            
+
+class TwinHouse: 
+    def __init__(self, image_path, x, y, width, height):
+        self.image = pygame.image.load(image_path)
+        self.image = pygame.transform.scale(self.image, (400, 280))
+        self.rect = self.image.get_rect(topleft=(x, y))
+        self.collision_rect = self.rect.inflate(-60, -60)  # Shrink collision area horizontally and vertically
+
+    def check_interaction(self, player_rect):
+        # Check if the player interacts with the house
+        if self.collision_rect.colliderect(player_rect):
+            self.enter_callback()  # Trigger the transition to another setting   
+                  
 class HouseWalls:
     def __init__(self, image_path, x, y, width, height):
         self.image = pygame.image.load(image_path)
@@ -55,6 +80,7 @@ class HouseWalls:
         self.rect = pygame.Rect(x, y, width, height)
         # Adjust collision rectangle to allow the player to appear in front
         self.collision_rect = self.rect.inflate(-20, -60)  # Shrink collision area horizontally and vertically      
+
 class Inventory:
     def __init__(self):
         self.items = []  # List to hold items in the inventory

@@ -43,14 +43,13 @@ class NPC:
         self.rect = pygame.Rect(x, y, scale[0], scale[1])
         self.collision_rect = self.rect.inflate(-40, -40)  # Adjust values as needed
         self.speed = speed
-        self.dialog = dialog or []  # Add dialog attribute to NPC
-        #self.dialog_templete = dialog_templete or []  # Default to an empty list if not provided
-        self.last_direction = "down"  # Track the last movement direction
+        self.dialog = dialog or []  
+        self.last_direction = "down"  
         self.current_frame = 0
         self.animation_timer = 0
         if x is not None and y is not None:
             self.rect = pygame.Rect(x, y, 32, 32)
-            self.collision_rect = self.rect.inflate(-10, -10)  # Add a collision rectangle
+            self.collision_rect = self.rect.inflate(-20, -30)  # Add a collision rectangle
         else:
             self.rect = None  # Default to None if position is not set
             self.collision_rect = None  # Default to None if position is not set

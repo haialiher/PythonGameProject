@@ -10,7 +10,7 @@ import pygame
 from src.npc import NPC
 from src.player import Player
 from src.input import get_pressed_keys  # Import the helper function
-from src.objects import HouseWalls, Inventory, Item, Tree, Bush, House  # Import Tree, Bush, and House classes
+from src.objects import Bed, Furniture, HouseWalls, Inventory, Item, Tree, Bush, House, TwinHouse  # Import Tree, Bush, and House classes
 
 PALE_SAGE_GREEN = (152, 193, 153)
 DARK_RED = (40, 0, 0)    
@@ -25,9 +25,11 @@ FOREST_RECT = pygame.Rect(0, 0, 1550, 1200)
 class Game:
     def __init__(self):
     # Pygame
-        
+        self.running = True
+        self.show_tutorial = True
         pygame.init()
         pygame.display.set_caption("idek yet")
+        self.current_area = "forest" 
 
     # Set up the screen
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
@@ -52,11 +54,13 @@ class Game:
 
         self.camera_offset = [0, 0]    # Camera
         self.clock = pygame.time.Clock()
-        self.running = True
+        
     # Obstacles (trees, bushes, house)
         self.obstacles = []
         self.main_obstacles = []  # Store forest-specific obstacles
         self.house_obstacles = []   # Store house-specific obstacles
+        self.twinHouse_obstacles = []
+        
     # NPCs
         self.npcList = []  
         self.npc_positions = {}  
@@ -85,21 +89,20 @@ class Game:
         pygame.draw.rect(self.screen, (255, 255, 255), text_box, 2)
         text_surface = self.dialog_font.render(dialog, True, (255, 255, 255))
         self.screen.blit(text_surface, (text_box.x + 10, text_box.y + 10))
-
-        # Render NPC name in the bottom-left corner
+    # Display NPC name if provided
         if npc_name:
             name_surface = self.dialog_font.render(npc_name, True, (255, 255, 255))
             self.screen.blit(name_surface, (10, SCREEN_HEIGHT - 40))  # Adjust position as needed
 
         pygame.display.flip()
 
-        # Wait for 2 seconds or until Tab is pressed
         start_time = pygame.time.get_ticks()
         while pygame.time.get_ticks() - start_time < 3000:
             for event in pygame.event.get():
                 if event.type == pygame.KEYDOWN and event.key == pygame.K_TAB:
-                    return  # Exit the dialog early if Tab is pressed
+                    return  
 
+#npc dialog and stuff
     def init_npcs(self):
         innocent_dialog = [
             "I saw {murderer} near the {location} earlier.",
@@ -179,7 +182,7 @@ class Game:
         self.npcList = [self.greenTwin, self.pinkTwin, self.gingerBoy]  # Initialize NPC list with all NPCs
         self.npcList_names = [self.greenTwin.name, self.pinkTwin.name,self.gingerBoy.name]  # Store NPC names for dialo
         self.murderer = random.choice(self.npcList_names)
-        print(f"Random murderer selected: {self.murderer}")
+        print(f"Random murderer: {self.murderer}")
          
         if self.murderer != self.greenTwin.name: 
             self.greenTwin.dialog.extend(innocent_dialog)
@@ -202,21 +205,24 @@ class Game:
    
     def load_items(self):
 
-        self.item_names = ["Fork", "Knife"]
+        self.item_names = ["Fork", "Knife", "Bat","Brick","Mug", ]
         self.weapon = random.choice(self.item_names)
-        self.location_names = ["house", "forest"]
+        self.location_names = ["house", "forest","twin's house"]
         self.weapon_location = random.choice(self.location_names)
-        print(f"Random Weapon selected: {self.weapon} location: {self.weapon_location}") 
-#where weapons are located  
+        print(f" Random Weapon: {self.weapon} \nRandom Location: {self.weapon_location}") 
+#where weapons are located 
+    #Fork
         if self.weapon == "Fork":
             if self.weapon_location == "forest":
-                self.fork = Item("Fork", "kind of pointy, looks like it was hidden", "assets/images/items/fork.png", 485, 358)
+                self.fork = Item("Fork", "kind of pointy, looks like it was hidden. ", "assets/images/items/fork.png", 1316, 718)
                 self.main_obstacles.append(self.fork)
             elif self.weapon_location == "house":
                 self.fork = Item("Fork", "kinda of pointy, looks used.", "assets/images/items/fork.png", 300, 400)
                 self.house_obstacles.append(self.fork)
-            else:     
-                self.fork = Item("Fork", "Brand new", "assets/images/items/fork.png", 400, 413)
+            elif self.weapon_location == "twin's house":
+                self.fork = Item("Fork", "dull but is very used. ", "assets/images/items/fork.png", 231, 220)
+                self.twinHouse_obstacles.append(self.fork)
+    #Knife
         elif self.weapon == "Knife":
             if self.weapon_location == "forest":
                 self.knife = Item("Knife", "it was tossed into the grass", "assets/images/items/knife.png", 435, 955)
@@ -224,9 +230,74 @@ class Game:
             elif self.weapon_location == "house":
                 self.knife = Item("Knife", "it was used to cut things recently", "assets/images/items/knife.png", 360, 195)
                 self.house_obstacles.append(self.knife)
-            else:
-                self.knife = Item("Knife", "sharp and shiny almost brand new", "assets/images/items/knife.png", 714, 1095)
-            
+            elif self.weapon_location == "twin's house":
+                self.knife = Item("Knife", "it was used to cut things recently", "assets/images/items/knife.png", 900, 487)
+                self.twinHouse_obstacles.append(self.knife)
+    #bat
+        elif self.weapon == "Bat":
+            if self.weapon_location == "forest":
+                self.bat = Item("Bat", "looks lost or purposely placed", "assets/images/items/bat.png", 1095, 110)
+                self.main_obstacles.append(self.bat)
+            elif self.weapon_location == "house":
+                self.bat = Item("Bat", "Possibly used for Baseball or other things.", "assets/images/items/bat.png", 120, 422)
+                self.house_obstacles.append(self.bat)
+            elif self.weapon_location == "twin's house":
+                self.bat = Item("Bat", "Used for baseball but the twins don't play.", "assets/images/items/bat.png", 841, 208)
+                self.twinHouse_obstacles.append(self.bat)
+    #brick
+        elif self.weapon == "Brick":
+            if self.weapon_location == "forest":
+                self.brick = Item("Brick", "Heavy, the contruction site is 16 miles away", "assets/images/items/brick.png", 1480, 349)
+                self.main_obstacles.append(self.brick) 
+            elif self.weapon_location == "house":
+                self.brick = Item("Brick", "Heavy, why would it be in the house", "assets/images/items/brick.png", 582, 534)
+                self.house_obstacles.append(self.brick)
+            elif self.weapon_location == "twin's house":
+                self.brick = Item("Brick", "Heavy, twins don't do construction", "assets/images/items/brick.png", 311, 474)
+                self.twinHouse_obstacles.append(self.brick)
+    #mug
+        elif self.weapon == "Mug":
+            if self.weapon_location == "forest":
+                self.mug = Item("Mug", "Chipped, looks like it hasn't been used for drinks", "assets/images/items/mug.png", 1510, 466) 
+                self.main_obstacles.append(self.mug) 
+            elif self.weapon_location == "house":
+                self.mug = Item("Mug", "Old and Chipped, has dust on the inside ", "assets/images/items/mug.png", 191, 533) 
+                self.house_obstacles.append(self.mug) 
+            elif self.weapon_location == "twin's house":
+                self.mug = Item("Mug", "Chipped, Twins HATE coffee why did they have this ", "assets/images/items/mug.png", 1510, 466) 
+                self.twinHouse_obstacles.append(self.mug)
+    #pipe  
+        elif self.weapon == "Pipe":
+            if self.weapon_location == "forest":
+                self.pipe = Item("Pipe", "Has a large dent and hairs on it ", "assets/images/items/pipe.png", 615, 15) 
+                self.main_obstacles.append(self.pipe) 
+            elif self.weapon_location == "house":
+                self.pipe = Item("Pipe", "No one has done construction in house recently ", "assets/images/items/pipe].png", 191, 533) 
+                self.house_obstacles.append(self.pipe) 
+            elif self.weapon_location == "twin's house":
+                self.pipe = Item("Pipe", " The Twins just cleaned after construction was done ", "assets/images/items/pipe.png", 391, 410) 
+                self.twinHouse_obstacles.append(self.pipe)
+#if they arent a weapon,                
+        if self.weapon != "Fork":
+                self.fork = Item("Fork", "Brand new but might be misplaced", "assets/images/items/fork.png", 400, 613)
+                self.main_obstacles.append(self.fork)
+        if self.weapon != "Knife":
+                self.knife = Item("Knife", "so shiny you can see your reflection", "assets/images/items/knife.png", 844, 405)
+                self.twinHouse_obstacles.append(self.knife)
+        if self.weapon != "Bat":
+            self.bat = Item("Bat", "Lost baseball bat hopefully owner comes by", "assets/images/items/bat.png", 189, 828)
+            self.main_obstacles.append(self.bat)
+        if self.weapon != "Brick":
+            self.brick = Item("Brick", "Heavy, truck must've dropped it", "assets/images/items/brick.png", 74, 62)
+            self.main_obstacles.append(self.brick)
+        if self.weapon != "Mug":
+            self.mug = Item("Mug", "Still has some coffee in it", "assets/images/items/mug.png" , 548,60)
+            self.house_obstacles.append(self.mug)
+        if self.weapon != "Pipe":
+            self.pipe = Item("Pipe", " The Twins just had construction done ", "assets/images/items/pipe.png", 391, 410) 
+            self.twinHouse_obstacles.append(self.pipe)
+    
+    #House             
     def load_housewalls(self):
         self.HouseWallsLeft = HouseWalls("assets/backgrounds/house/HouseWalls/HouseWallsLeft.png", 0, 0, 48, 700)
         self.HouseWallsRight = HouseWalls("assets/backgrounds/house/HouseWalls/HouseWallsRight.png", 651, 0, 48, 700)
@@ -249,23 +320,84 @@ class Game:
             self.HousewallsMid,
             
         ])
-          
+    
+    def load_house_fur(self):
+        self.pinkBed = Bed("assets/images/furniture/pinkBed.png",150,20,80,150)
+        self.PinkbedsideTable = Furniture("assets/images/furniture/PinkbedsideTable.png",50,20,64,64)
+        self.pinkDresser = Furniture("assets/images/furniture/dresser.png",250,0, 64,90 )
+        
+        self.fridge = Furniture("assets/images/furniture/fridge.png", 405, 0 , 60, 100)
+        self.stove = Furniture("assets/images/furniture/stove.png", 465, 20, 64,74 )
+        self.counter = Furniture("assets/images/furniture/counter.png", 530, 20, 70,64 )
+        self.counter2 = Furniture("assets/images/furniture/counter.png", 580, 20, 70,64 )
+        self.house_obstacles.extend([
+            self.pinkBed, self.PinkbedsideTable,self.pinkDresser,
+            self.fridge, self.stove, self.counter, self.counter2,
+        ])
+    
+    #Twin's house
+    def load_twinHouse_fur(self):
+    #bedrooms
+        self.greenBed = Bed("assets/images/furniture/greenBed.png",150,20,80,150)
+        self.greenBedTable = Furniture("assets/images/furniture/greenBedTable.png", 80,30,64,64)
+        self.greenDresser = Furniture("assets/images/furniture/greenDresser.png",250,10, 64,90 )
+        self.pinkBed = Bed("assets/images/furniture/pinkBed.png",830,20,80,150)
+        self.PinkbedsideTable = Furniture("assets/images/furniture/PinkbedsideTable.png",930,30,64,64)
+        self.pinkDresser = Furniture("assets/images/furniture/dresser.png",750, 10, 64,90 )
+    #kitchen
+        self.fridge = Furniture("assets/images/furniture/fridge.png", 715, 360 , 60, 100)
+        self.stove = Furniture("assets/images/furniture/stove.png", 775, 385, 64,74 )
+        self.counter = Furniture("assets/images/furniture/counter.png", 840, 390, 70,64 )
+        self.counter2 = Furniture("assets/images/furniture/counter.png", 900, 390, 70,64 )
+        
+        
+        self.twinHouse_obstacles.extend([
+           self.pinkBed, self.PinkbedsideTable, self.pinkDresser,
+           self.greenBed, self.greenBedTable, self.greenDresser,
+           self.fridge, self.stove, self.counter, self.counter2,
+        ])
+        
+    def load_twinhousewalls(self):
+        self.THLeftBotWall = HouseWalls("assets/backgrounds/twinHouse/thWalls/THLeftBotWall.png",-2, 660, 400, 56) 
+        self.THLeftWall = HouseWalls("assets/backgrounds/twinHouse/thWalls/THLeftWall.png", -2 , -2 , 56 ,725)
+        self.THtopWall = HouseWalls("assets/backgrounds/twinHouse/thWalls/THtopWall.png", 0 , 0 , 1050 ,56)
+        self.THRightWall = HouseWalls("assets/backgrounds/twinHouse/thWalls/THRightWall.png", 1000 , -20 , 56 ,725)
+        self.THRightBotWall = HouseWalls("assets/backgrounds/twinHouse/thWalls/THRightBotWall.png", 600 , 660 , 400 ,56)
+        self.THMidRightWall = HouseWalls("assets/backgrounds/twinHouse/thWalls/THMidRightWall.png", 620 , 340 , 380 ,90)
+        self.THLeftMidWall = HouseWalls("assets/backgrounds/twinHouse/thWalls/THLeftMidWall.png", -2 , 360 , 400 ,80)
+        self.THMidWall =  HouseWalls("assets/backgrounds/twinHouse/thWalls/THMidWall.png", 620 , 200 , 56 ,150)
+        
+        self.twinHouse_obstacles.extend ([
+            self.THLeftBotWall,
+            self.THLeftWall,
+            self.THtopWall,
+            self.THRightWall,
+            self.THRightBotWall,
+            self.THMidRightWall,
+            self.THLeftMidWall,
+            self.THMidWall,
+        ])
+
+    #forest objects 
     def load_trees_and_bushes(self):
         self.trees = [
-            Tree("assets/images/environment/tree.png", 300, 400, 74, 94),
+            Tree("assets/images/environment/tree.png", 1039, 332, 74, 94),
+            Tree("assets/images/environment/tree.png", 1341, 539, 74, 94),
+            Tree("assets/images/environment/tree.png", 1463, 267, 74, 94),
+            Tree("assets/images/environment/tree.png", 920, 400, 74, 94),
             Tree("assets/images/environment/tree.png", 500, 632, 74, 94),
             Tree("assets/images/environment/tree.png", 1000, 700, 74, 94),
             Tree("assets/images/environment/tree.png", 1100, 750, 74, 94),
             Tree("assets/images/environment/tree.png", 200, 700, 74, 94),
             Tree("assets/images/environment/tree.png", 1140, 540, 74, 94),
-            Tree("assets/images/environment/tree.png", 228, 540, 74, 94),
+            #Tree("assets/images/environment/tree.png", 228, 540, 74, 94),
             Tree("assets/images/environment/tree.png", 467, 300, 74, 94),
-            Tree("assets/images/environment/tree.png", 250, 200, 74, 94),
+            Tree("assets/images/environment/tree.png", 150, 200, 74, 94),
             Tree("assets/images/environment/tree.png", 800, 100, 74, 94),
             Tree("assets/images/environment/tree.png", 900, 50, 74, 94),
-            Tree("assets/images/environment/tree.png", 590, 654, 74, 94),
-            Tree("assets/images/environment/tree.png", 380, 700, 74, 94),
-            Tree("assets/images/environment/tree.png", 569, 800, 74, 94),
+            Tree("assets/images/environment/tree.png", 590, 780, 74, 94),
+            Tree("assets/images/environment/tree.png", 52, 826, 74, 94),
+            Tree("assets/images/environment/tree.png", 85, 619, 74, 94),
             Tree("assets/images/environment/tree.png", 434, 900, 74, 94),
             Tree("assets/images/environment/tree.png", 73, 246, 74, 94),
             Tree("assets/images/environment/tree.png", 200, 900, 74, 94),
@@ -275,8 +407,10 @@ class Game:
         ]
     #bushes (don't place at (x =700) )
         self.bushes = [
-            Bush("assets/images/environment/bush.png", 600, 500, 50, 50),
+            Bush("assets/images/environment/bush.png", 600, 400, 50, 50),
+            Bush("assets/images/environment/bush.png", 1242, 331, 50, 50),
             Bush("assets/images/environment/bush.png", 1512, 537, 50, 50),
+            Bush("assets/images/environment/bush.png", 861, 260, 50, 50),
             Bush("assets/images/environment/bush.png", 800, 600, 50, 50),
             Bush("assets/images/environment/bush.png", 1233, 951, 50, 50),
             Bush("assets/images/environment/bush.png", 200, 700, 50, 50),
@@ -303,14 +437,16 @@ class Game:
         self.load_items()  # Load items
         self.load_trees_and_bushes()  # Load trees and bushes
         self.house = House("assets/images/environment/house.png", *HOUSE_POSITION, 80, 94)
+        self.twinHouse = TwinHouse("assets/images/environment/twinHouse.png", 170, 190, 400, 280)
         # Initially set obstacles to forest obstacles
         self.npcList.clear()  # Remove house NPCs
         self.npcList.extend(self.forest_npcs)  # Add forest NPCs dynamically
 
-        self.main_obstacles.extend(self.trees + self.bushes + [self.house])
+        self.main_obstacles.extend(self.trees + self.bushes + [self.house] + [self.twinHouse])
         self.obstacles = self.main_obstacles
 
-# Set up the background and path images with scaling
+#setting up location and checking player background
+        
     def setup_background_and_scaling(self, background_path, path_path):
         """Set up the background and path images with scaling."""
     #load the background image
@@ -326,11 +462,10 @@ class Game:
         self.path = pygame.transform.scale(self.path, (new_width, new_height))  # Scale the path to match the background
         
     def load_house_setting(self):
-        """Logic to load the house setting."""
-        print("Loading new setting...")
         self.setup_background_and_scaling("assets/backgrounds/house/Housefloors.png", "assets/backgrounds/house/Housefloors.png")
         self.obstacles = self.house_obstacles
         self.load_housewalls()  # Load house walls
+        self.load_house_fur()
         self.npcList.clear()
         self.npcList.extend(self.house_npcs)  # Add forest NPCs dynamically
         
@@ -339,8 +474,17 @@ class Game:
             self.npc_positions[npc] = npc.rect.topleft
          #removing ig they are in forrest
     # Set player position
-        
-        print("New setting loaded!")
+    
+    def load_twinHouse_setting(self):
+        print("Loading new setting...")
+        self.setup_background_and_scaling("assets/backgrounds/twinHouse/twinHouseInside.png", "assets/backgrounds/twinHouse/twinHouseInside.png")
+        self.npcList.clear()
+        self.load_twinhousewalls()
+        self.load_twinHouse_fur()
+        self.obstacles = self.twinHouse_obstacles 
+        self.player.rect.topleft = (466, 654)
+        for npc in self.npcList:
+            self.npc_positions[npc] = npc.rect.topleft
 
     def load_forest_from_house(self):
         print("Returning to forest...")
@@ -352,7 +496,19 @@ class Game:
             npc.rect.topleft = self.npc_positions[npc]
         self.npcList.extend([self.greenTwin, self.pinkTwin])
         self.player.rect.topleft = (942, 962)
-
+        
+    def load_forest_from_twin_house(self):
+        print("Returning to forest...")
+        self.setup_background_and_scaling("assets/backgrounds/forrest/forrest.png", "assets/backgrounds/forrest/path.png")
+        self.obstacles = self.main_obstacles
+        self.npcList.clear()
+        self.npcList.extend(self.forest_npcs)
+        for npc in self.npc_positions:
+            npc.rect.topleft = self.npc_positions[npc]
+        self.npcList.extend([self.greenTwin, self.pinkTwin])
+        self.player.rect.topleft = (347, 442)
+        
+#where is player    
     def check_area(self, player_rect):
         for location_name, location_rect in self.locations.items():
             if location_rect.colliderect(player_rect):
@@ -360,29 +516,61 @@ class Game:
                 return
         print("Player is outside defined areas.")
         return None
-    
+
     def check_transition(self):
     # Transition from forest to house
         if 932 <= self.player.rect.x <= 997 and 937 <= self.player.rect.y <= 970:
-            print("Transitioning to house...")
-            self.load_house_setting()
-            return True
+            if self.current_area == "forest":
+                print("to the house...")
+                self.load_house_setting()
+                self.current_area = "house"
+                return True
     # Transition from house to forest
         elif 285 <= self.player.rect.x <= 370 and 582 <= self.player.rect.y <= 612:
-            print("Transitioning to forest...")
-            self.load_forest_from_house()
-            return True
+            if self.current_area == "house":
+                print("to the forest...")
+                self.load_forest_from_house()
+                self.current_area = "forest"
+                return True
+    #transition from forest to Twin House 
+        elif 326 <= self.player.rect.x <= 400 and 440 <= self.player.rect.y <= 470:
+            if self.current_area == "forest": 
+                print("to the Twin's house...")
+                self.load_twinHouse_setting() 
+                self.current_area = "twin house"
+                return True
+    #Twin House to Forest
+        elif 390 <= self.player.rect.x <= 560 and 630 <= self.player.rect.y <= 670:
+            if self.current_area == "twin house":
+                print("to the forest...")
+                self.load_forest_from_twin_house()
+                self.current_area = "forest"
+                return True
+            
+    def render_transition_prompt(self):
+        # Show "Enter" prompt if player is in any transition area
+        if self.current_area == "forest" and 932 <= self.player.rect.x <= 997 and 937 <= self.player.rect.y <= 970:
+            self.render_transition_message("Enter")
+        elif self.current_area == "house" and 285 <= self.player.rect.x <= 370 and 582 <= self.player.rect.y <= 612:
+            self.render_transition_message("Enter")
+        elif self.current_area == "forest" and 326 <= self.player.rect.x <= 400 and 440 <= self.player.rect.y <= 470:
+            self.render_transition_message("Enter")
+        elif self.current_area == "twin house" and 390 <= self.player.rect.x <= 560 and 630 <= self.player.rect.y <= 670:
+            self.render_transition_message("Enter")
 
+    def is_player_near_npc(self, player_rect, npc_rect, proximity_range=50):
+        distance = ((player_rect.centerx - npc_rect.centerx) ** 2 + (player_rect.centery - npc_rect.centery) ** 2) ** 0.5
+        return distance <= proximity_range
+    
+    def is_player_near_item(self, player_rect, item_rect, proximity_range=50):
+        distance = ((player_rect.centerx - item_rect.centerx) ** 2 + (player_rect.centery - item_rect.centery) ** 2) ** 0.5
+        return distance <= proximity_range
+    
+    def is_player_near_transition(self, player_rect, transition_rect, proximity_range=50):
+        distance = ((player_rect.centerx - transition_rect.centerx) ** 2 + (player_rect.centery - transition_rect.centery) ** 2) ** 0.5
+        return distance <= proximity_range
+    
 #Handle key events                  
-    def handle_keydown(self,event):
-        if event.key == pygame.K_RETURN:
-            self.handle_dialog()
-        elif event.key == pygame.K_e:
-            self.handle_item_pickup()
-        elif event.key == pygame.K_i:
-            self.inventoryOpen = not self.inventoryOpen
-        elif event.key == pygame.K_ESCAPE:
-            self.running = False if not self.inventoryOpen else self.close_inventory()
              
     def handle_item_pickup(self):
         for obstacle in self.obstacles:
@@ -413,49 +601,57 @@ class Game:
                 
                 npc.interaction_count += 1  # Increment interaction count for this NPC
                 print(f"{npc.name} interaction count: {npc.interaction_count}")
- 
-    def handle_events(self):
-        for event in pygame.event.get():
+                  
+    def handle_item_pickup(self):
+        for obstacle in self.obstacles:
+            if isinstance(obstacle, Item) and obstacle.rect and self.player.rect.colliderect(obstacle.rect):
+                self.inventory.add_items(obstacle)  # Add the item to the inventory
+                self.obstacles.remove(obstacle)  # Remove the item from the world
+                print(f"Picked up: {obstacle.name}")
+                          
+    def handle_events(self,events):
+         for event in events:
             if event.type == pygame.QUIT:
                 self.running = False
             elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_TAB:
-                    self.handle_dialog()
-                    # Advance dialog on Enter key
-                    if self.check_transition():  # Check for forest/house transitions
-                        return  # Exit early if transitioning
-                elif event.key == pygame.K_ESCAPE:
-                    if self.inventoryOpen:  # Close inventory if it's open
-                        self.inventoryOpen = False
-                    else:  # Otherwise, quit the game
-                        self.running = False
-                elif event.key == pygame.K_e:  # Press e to pick up items
-                    self.handle_item_pickup()
-                elif event.key == pygame.K_i:  # Toggle inventory with 'I'
-                    self.inventoryOpen = not self.inventoryOpen
-                  
-    def handle_keydown(self,event):
-        if event.key == pygame.K_RETURN:
-            self.handle_dialog()
-        elif event.key == pygame.K_e:
-            self.handle_item_pickup()
-        elif event.key == pygame.K_i:
-            self.inventoryOpen = not self.inventoryOpen
-        elif event.key == pygame.K_g:
-            self.guessing_mode = not self.guessing_mode
-        elif event.key == pygame.K_ESCAPE:
-            self.running = False if not self.inventoryOpen else self.close_inventory()
+                if self.show_tutorial:
+                    if event.key == pygame.K_RETURN:  # Exit tutorial on ENTER
+                        self.show_tutorial = False
+                else:
+                    if event.key == pygame.K_TAB:
+                        self.handle_dialog()  # Advance dialog on Tab key
+                    elif event.key == pygame.K_RETURN:
+                        if self.check_transition():
+                            return
+                    elif event.key == pygame.K_ESCAPE:
+                        if self.inventoryOpen:  
+                            self.inventoryOpen = False
+                        else: 
+                            self.running = False
+                    elif event.key == pygame.K_e:  
+                        self.handle_item_pickup()
+                    elif event.key == pygame.K_c: 
+                        self.inventoryOpen = not self.inventoryOpen
+                    elif event.key == pygame.K_g:
+                        self.guessing_mode = not self.guessing_mode
             
     def draw_guessing_ui(self):
         guessingBox = pygame.Rect(50, 50, SCREEN_WIDTH - 100, SCREEN_HEIGHT - 100)
         pygame.draw.rect(self.screen, (178, 156, 162), guessingBox)  # Background color for the guessing box
         pygame.draw.rect(self.screen, (255, 255, 255), guessingBox, 2)  # Border color
-        instructions = self.dialog_font.render("Press keys to guess: NPC (1/2), Weapon (3/4), Location (5/6)", True, (255, 255, 255))
-        
-        instructions_width, instructions_height = instructions.get_size()
-        instructions_x = guessingBox.x + (guessingBox.width - instructions_width) // 2
-        instructions_y = guessingBox.y + 10  # Add a small vertical margin
-        self.screen.blit(instructions, (instructions_x, instructions_y))
+        # Render multi-line instructions
+        instructions_lines = [
+            "Choose category then use left and right arrows to choose",
+            "Suspect (1), Weapon (2), Location (3)",
+            "Click enter when ready to guess :p"
+        ]
+        line_height = self.dialog_font.get_height()
+        for i, line in enumerate(instructions_lines):
+            instructions = self.dialog_font.render(line, True, (255, 255, 255))
+            instructions_width = instructions.get_width()
+            instructions_x = guessingBox.x + (guessingBox.width - instructions_width) // 2
+            instructions_y = guessingBox.y + 10 + i * line_height
+            self.screen.blit(instructions, (instructions_x, instructions_y))
 
 
         current_guess = f"NPC: {self.guess['npc']}, Weapon: {self.guess['weapon']}, Location: {self.guess['location']}"
@@ -479,19 +675,15 @@ class Game:
     
         # Track the current category being guessed
         if 'current_category' not in self.__dict__:
-            self.current_category = None  # None means no category selected   
+            self.current_category = None   
         for event in events:
             if event.type == pygame.KEYDOWN:
-                # Select category
                 if event.key == pygame.K_1:
                     self.current_category = "npc"
-                   # print("NPC category selected. Use left/right arrows to scroll.")
                 elif event.key == pygame.K_2:
                     self.current_category = "weapon"
-                   # print("Weapon category selected. Use left/right arrows to scroll.")
                 elif event.key == pygame.K_3:
                     self.current_category = "location"
-                   # print("Location category selected. Use left/right arrows to scroll.")
 
                 elif event.key == pygame.K_LEFT:
                     if self.current_category == "npc":
@@ -517,7 +709,8 @@ class Game:
                 # Confirm guess
                 elif event.key == pygame.K_RETURN:
                     self.check_guess()
-                    
+
+#drawing gui                     
     def display_message(self, message, color=None):
         """Display a message on the screen."""
         message_font = pygame.font.Font(None, 50)
@@ -537,7 +730,72 @@ class Game:
         pygame.display.update()
         pygame.time.delay(2000)
 
+    def render_interaction_message(self):
+        message = "TAB to talk"
+        font = pygame.font.Font(None, 24)
+        text_surface = font.render(message, True, (217,83,127))  
         
+        background_surface = pygame.Surface((text_surface.get_width() + 10, text_surface.get_height() + 10), pygame.SRCALPHA)
+        background_surface.fill((0, 0, 0, 128))
+        
+        self.screen.blit(background_surface, (5, 5))
+        self.screen.blit(text_surface, (10, 10))
+        
+    def render_pickup_message(self):
+        message = "Press E to pick up"
+        font = pygame.font.Font(None, 24)
+        text_surface = font.render(message, True, (217,83,127))
+        
+        background_surface = pygame.Surface((text_surface.get_width() + 10, text_surface.get_height() + 10), pygame.SRCALPHA)
+        background_surface.fill((0, 0, 0, 128))
+        
+        self.screen.blit(background_surface, (5, 5))
+        self.screen.blit(text_surface, (10, 10)) 
+        
+    def render_transition_message(self, message):
+        message = "ENTER"
+        font = pygame.font.Font(None, 24)
+        text_surface = font.render(message, True, (217,83,127)) 
+        
+        background_surface = pygame.Surface((text_surface.get_width() + 10, text_surface.get_height() + 10), pygame.SRCALPHA)
+        background_surface.fill((0, 0, 0, 128)) 
+
+        self.screen.blit(background_surface, (5, 5))
+        self.screen.blit(text_surface, (10, 10)) 
+   
+    def render_tutorial(self):
+        """Render the tutorial screen with instructions."""
+        self.screen.fill((217,83,127))  # Fill the screen with black
+
+    # Display tutorial text
+        font = pygame.font.Font(None, 36)
+        instructions = [
+            "explore map talk to npcs and pick up items to solve the mystery.",
+            "there's clues hidden in item descriptions and npc text",
+            "",
+            "Controls: 'WASD' to move.",
+            "'TAB' to talk to NPCs", 
+            "'E' to pick up items.",
+            "'C' to open your Clues.", 
+            "'ESC' to quit the game.",
+            "",
+            "Use the 'G' key to enter guessing mode.",
+            "",
+            "Press ENTER to start the game."
+        ]
+        total_height = len(instructions) * 40  # 40 pixels per line (adjust as needed)
+        start_y = (SCREEN_HEIGHT - total_height) // 2
+
+        # Render each line of text
+        for i, line in enumerate(instructions):
+            text_surface = font.render(line, True, (255, 255, 255))  # White text
+            text_width = text_surface.get_width()
+            x = (SCREEN_WIDTH - text_width) // 2  # Center horizontally
+            y = start_y + i * 40  # Position each line with spacing
+            self.screen.blit(text_surface, (x, y))
+
+        pygame.display.flip()  # Update the display
+    
     def check_guess(self):
         print(f"Player's guess: NPC={self.guess['npc']}, Weapon={self.guess['weapon']}, Location={self.guess['location']}")
         print(f"Correct values: NPC={self.murderer}, Weapon={self.weapon}, Location={self.weapon_location}")
@@ -547,50 +805,19 @@ class Game:
             self.guess["location"].lower() == self.weapon_location.lower()):
                 self.display_message("yayyyy you are correct", color=(157, 193, 131))
                 print("wooooo! you solved it")
-                self.guessing_mode = False    
+                self.guessing_mode = False   
+                self.running = False 
         else:
             print("hmm something seems wrong. try again")
             self.display_message("Hmm, something seems wrong. Try again.", color=(224, 33, 138))
-                  
-    def handle_item_pickup(self):
-        for obstacle in self.obstacles:
-            if isinstance(obstacle, Item) and obstacle.rect and self.player.rect.colliderect(obstacle.rect):
-                self.inventory.add_items(obstacle)  # Add the item to the inventory
-                self.obstacles.remove(obstacle)  # Remove the item from the world
-                print(f"Picked up: {obstacle.name}")
-                          
-    def handle_events(self,events):
-         for event in events:
-            if event.type == pygame.QUIT:
-                self.running = False
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_TAB:
-                    self.handle_dialog()  # Advance dialog on Tab key
-                elif event.key == pygame.K_RETURN:
-                    if self.check_transition():
-                        return
-                elif event.key == pygame.K_ESCAPE:
-                    if self.inventoryOpen:  # Close inventory if it's open
-                        self.inventoryOpen = False
-                    else:  # Otherwise, quit the game
-                        self.running = False
-                elif event.key == pygame.K_e:  # Press e to pick up items
-                    self.handle_item_pickup()
-                elif event.key == pygame.K_i:  # Toggle inventory with 'I'
-                    self.inventoryOpen = not self.inventoryOpen
-                elif event.key == pygame.K_g:
-                    self.guessing_mode = not self.guessing_mode
-                    if self.guessing_mode:
-                        print("Guessing mode enabled. Press G again to disable.")
-                    else:
-                        print("Guessing mode disabled.")
-#Update and Drawing
+
+#Update/drawing
     def update(self):
         keys = get_pressed_keys()
         proposed_rect = self.player.rect.copy()
             # Move the player based on input
         self.player.move(keys, self.obstacles)
-            # cannot exite our the bondaries of map.
+            #bondaries of map.
         self.player.rect.left = max(self.player.rect.left, 0)
         self.player.rect.top = max(self.player.rect.top, 0)
         self.player.rect.right = min(self.player.rect.right, self.forrest.get_width())
@@ -632,6 +859,17 @@ class Game:
         if self.inventoryOpen:
             self.inventory.display(self.screen, self.dialog_font, SCREEN_WIDTH, SCREEN_HEIGHT)
         
+        for npc in self.npcList:
+            if self.is_player_near_npc(self.player.rect, npc.rect):
+                self.render_interaction_message()
+                break
+             
+        for obstacle in self.obstacles:
+            if isinstance(obstacle, Item) and self.is_player_near_item(self.player.rect, obstacle.rect):
+                self.render_pickup_message()
+                break 
+        self.render_transition_prompt()
+        
     def draw(self):
         self.draw_background()
         self.draw_sprites()
@@ -639,15 +877,15 @@ class Game:
         pygame.display.flip()
         
      #checking the area
-   
 
     def run(self):
         while self.running:
             events = pygame.event.get()
             self.handle_events(events)
             #print(f"Player position: ({self.player.rect.x}, {self.player.rect.y})")
-
-            if self.guessing_mode:
+            if self.show_tutorial:
+                self.render_tutorial()
+            elif self.guessing_mode:
             # Draw only the guessing UI
                 #self.screen.fill((0, 0, 0))  # Clear the screen (black background)
                 self.draw_guessing_ui()
