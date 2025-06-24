@@ -97,85 +97,77 @@ class NPC:
         directions = ["up", "down", "left", "right", "idle", "up_right", "up_left", "down_right", "down_left"]
         self.direction = random.choice(directions)
         self.move_timer =  random.randint(1000,3000)
-        print(f"{self.name} chose direction {self.direction} for {self.move_timer}ms")
+        #print(f"{self.name} chose direction {self.direction} for {self.move_timer}ms")
     
     def move(self, dt, boundaries, obstacles):
-        """Move the NPC based on its direction."""
-        previous_animation = self.current_animation  # Track the current animation before changes
-    
-        # Create a copy of the NPC's current rect to calculate the proposed position
-        proposed_rect = self.rect.copy()
-    
-        # Adjust movement based on the current direction
+        # Determine dx, dy based on direction and speed
+        dx, dy = 0, 0
         if self.direction == "up" and self.direction == "right":
-            proposed_rect.y -= self.speed / 1.44
-            proposed_rect.x += self.speed / 1.44
+            dy -= self.speed / 1.44
+            dx += self.speed / 1.44
             self.current_animation = self.animations["right"]
             self.last_direction = "right"
         elif self.direction == "up" and self.direction == "left":
-            proposed_rect.y -= self.speed / 1.44
-            proposed_rect.x -= self.speed / 1.44
+            dy -= self.speed / 1.44
+            dx -= self.speed / 1.44
             self.current_animation = self.animations["left"]
             self.last_direction = "left"
         elif self.direction == "down" and self.direction == "left":
-            proposed_rect.y += self.speed / 1.44
-            proposed_rect.x -= self.speed / 1.44
+            dy += self.speed / 1.44
+            dx -= self.speed / 1.44
             self.current_animation = self.animations["left"]
             self.last_direction = "left"
         elif self.direction == "down" and self.direction == "right":
-            proposed_rect.y += self.speed / 1.44
-            proposed_rect.x += self.speed / 1.44
+            dy += self.speed / 1.44
+            dx += self.speed / 1.44
             self.current_animation = self.animations["right"]
             self.last_direction = "right"
         elif self.direction == "left":
-            proposed_rect.x -= self.speed
+            dx -= self.speed
             self.current_animation = self.animations["left"]
             self.last_direction = "left"
         elif self.direction == "right":
-            proposed_rect.x += self.speed
+            dx += self.speed
             self.current_animation = self.animations["right"]
             self.last_direction = "right"
         elif self.direction == "up":
-            proposed_rect.y -= self.speed
+            dy -= self.speed
             self.current_animation = self.animations["up"]
             self.last_direction = "up"
         elif self.direction == "down":
-            proposed_rect.y += self.speed
+            dy += self.speed
             self.current_animation = self.animations["down"]
             self.last_direction = "down"
         else:
-            # Set idle animation based on the last direction
             self.current_animation = self.animations[f"idle_{self.last_direction}"]
-    
-        # Check for collisions with obstacles
-        if any(proposed_rect.colliderect(obstacle.collision_rect) for obstacle in obstacles if hasattr(obstacle, 'collision_rect')):
-            print(f"{self.name} collided with an obstacle at {proposed_rect.topleft}")  # Debugging
-            self.choose_random_direction()  # Choose a new direction
-            return  # Stop movement if collision occurs
-    
-        # Check for boundary restrictions
-        if not boundaries.contains(proposed_rect):
-            print(f"{self.name} hit boundary at {proposed_rect.topleft}")  # Debugging
-            self.choose_random_direction()  # Choose a new direction
-            return  # Stop movement if hitting boundary
-    
-        # If no collisions and within boundaries, update the NPC's position
+
+        proposed_rect = self.rect.move(dx, dy)
+
+        # Check for collision with obstacles
+        for obs in obstacles:
+            obs_rect = getattr(obs, 'collision_rect', getattr(obs, 'rect', None))
+            if obs_rect and proposed_rect.colliderect(obs_rect):
+                return  # Don't move if colliding
+
+        # Optionally, check boundaries
+        if boundaries and not boundaries.contains(proposed_rect):
+            return
+
+        # If no collision, move NPC
         self.rect = proposed_rect
         self.collision_rect.topleft = self.rect.topleft  # Ensure collision_rect is updated
         print(f"{self.name} moved to {self.rect.topleft}")  # Debugging
     
         # Reset animation frame if the animation has changed
-        if self.current_animation != previous_animation:
-            self.current_frame = 0
             
-    def check_area_transition(self):
+    """def check_area_transition(self):
         FOREST_TO_HOUSE_TRANSITION = pygame.Rect(932, 937, 65, 33)
         HOUSE_TO_FOREST_TRANSITION = pygame.Rect(285, 582, 85, 30)
         FOREST_TO_TWIN_HOUSE_TRANSITION = pygame.Rect(326, 440, 74, 30)
         TWIN_HOUSE_TO_FOREST_TRANSITION = pygame.Rect(390, 630, 170, 40)
         if self.current_area == "forest" and FOREST_TO_HOUSE_TRANSITION.colliderect(self.rect):
             self.current_area = "house"
-            self.rect.topleft = (325, 612)  # New position in the house
+            self.rect.topleft = (325, 612)  
         elif self.current_area == "house" and HOUSE_TO_FOREST_TRANSITION.colliderect(self.rect):
             self.current_area = "forest"
             self.rect.topleft = (942, 962)  # New position in the forest
@@ -184,17 +176,14 @@ class NPC:
             self.rect.topleft = (466, 654)  # New position in the twin house
         elif self.current_area == "twin house" and TWIN_HOUSE_TO_FOREST_TRANSITION.colliderect(self.rect):
             self.current_area = "forest"
-            self.rect.topleft = (347, 442)  # New position in the forest
+            self.rect.topleft = (347, 442)  # New position in the forest""" 
     
     def update(self, dt, boundaries, obstacles):
         self.move_timer -= dt
-        print(f"{self.name} move_timer: {self.move_timer}")  # Debugging
+        #print(f"{self.name} move_timer: {self.move_timer}")  # Debugging
         if self.move_timer <=0 : 
             self.choose_random_direction()
         
         self.move(dt, boundaries, obstacles)
         self.update_animation(dt)
-        self.check_area_transition()
-
-
-
+        #self.check_area_transition()

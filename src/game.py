@@ -32,7 +32,7 @@ class Game:
         self.show_tutorial = True
         self.showing_intro_dialog = True
         pygame.init()
- 
+       
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
         pygame.display.set_caption("idek yet")
@@ -51,6 +51,7 @@ class Game:
         self.dialog_font = pygame.font.Font( "assets/pixelFont.otf", 27)
         self.current_area = "forest" 
         self.inventory = Inventory() 
+        self.inventory_scroll_offset = 0
         self.inventoryOpen = False  
         self.guessing_mode = False
         self.guess = {"npc": None, "weapon": None, "location": None}      
@@ -70,7 +71,7 @@ class Game:
         self.forest_obstacles = []  # Store forest-specific obstacles
         self.house_obstacles = []   # Store house-specific obstacles
         self.twin_house_obstacles = []
-        
+
         #npcs
         self.house_npcs = []  # Store house-specific NPCs
         self.forest_npcs = []  # Store forest-specific NPCs   
@@ -80,7 +81,7 @@ class Game:
         self.clock = pygame.time.Clock()
         self.setup_background_and_scaling("assets/backgrounds/forest/forest.png", 
                                 "assets/backgrounds/forest/path.png")
- 
+
 #scaling background          
     def setup_background_and_scaling(self, background_path, path_path):
         self.forest = pygame.image.load(background_path).convert_alpha()
@@ -174,7 +175,7 @@ class Game:
         if self.gingerBoy not in self.house_npcs:
             self.house_npcs.append(self.gingerBoy)
 
-        self.npcList = [self.greenTwin, self.pinkTwin, self.gingerBoy]  # Initialize NPC list with all NPCs
+        
         self.npcList_names = [self.greenTwin.name, self.pinkTwin.name,self.gingerBoy.name]  # Store NPC names for dialo
         self.murderer = random.choice(self.npcList_names)
         print(f"Random murderer: {self.murderer}")
@@ -272,7 +273,7 @@ class Game:
                 self.fork = Item("Fork", "Brand new but might be misplaced", "assets/images/items/fork.png", 400, 613)
                 self.forest_obstacles.append(self.fork)
         if self.weapon != "Knife":
-                self.knife = Item("Knife", "so shiny you can see your reflection", "assets/images/items/knife.png", 844, 405)
+                self.knife = Item("Knife", "so shiny you can see your reflection", "assets/images/items/knife.png", 500, 305)
                 self.twin_house_obstacles.append(self.knife)
         if self.weapon != "Bat":
             self.bat = Item("Bat", "Lost baseball bat hopefully owner comes by", "assets/images/items/bat.png", 189, 828)
@@ -389,26 +390,26 @@ class Game:
                 print(f"Picked up: {obstacle.name}")                
     def handle_dialog(self):
         for npc in self.npcList:
-            if self.player.rect.colliderect(npc.rect):  # Check if player is near an NPC
-                if npc.interaction_count >= 4:  # Limit interactions to 4 for this specific NPC
-                    # Display a fixed dialog after the 4th interaction
+            if self.player.rect.colliderect(npc.rect):  
+                if npc.interaction_count >= 4:  
                     self.display_dialog("I have nothing else to say.", npc_name=npc.name)
-                    print(f"{npc.name} has no dialog left.")  # Debugging message
+                    #print(f"{npc.name} has no dialog left.") 
                     return
                 
-                dialog = random.choice(npc.dialog)  # Select a random dialog from the NPC's dialog list
+                dialog = random.choice(npc.dialog)  
                 if dialog:  # Ensure dialog is not None
                     try:
                         # Format the dialog with the correct keys
                         formatted_dialog = dialog.format(murderer=self.murderer, weapon=self.weapon, location=self.weapon_location)
                         self.display_dialog(formatted_dialog, npc_name=npc.name)
                         npc.dialog.remove(dialog)
+                        self.inventory.add_clue(f"{npc.name}: {formatted_dialog}")
                     except KeyError as e:
                         print(f"Error formatting dialog: {e}")
                         self.display_dialog("Something seems off with the dialog.", npc_name=npc.name)
                 
                 npc.interaction_count += 1  # Increment interaction count for this NPC
-                print(f"{npc.name} interaction count: {npc.interaction_count}")                  
+                #print(f"{npc.name} interaction count: {npc.interaction_count}")                  
     def handle_item_pickup(self):
         for obstacle in self.obstacles:
             if isinstance(obstacle, Item) and obstacle.rect and self.player.rect.colliderect(obstacle.rect):
@@ -416,12 +417,30 @@ class Game:
                 self.obstacles.remove(obstacle)  # Remove the item from the world
                 print(f"Picked up: {obstacle.name}")                          
     def handle_events(self,events):
-         for event in events:
+        for event in events:
             if event.type == pygame.QUIT:
                 self.running = False
-            elif event.type == pygame.KEYDOWN:
+
+            # Inventory open: handle scrolling and closing
+            if self.inventoryOpen:
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_DOWN:
+                        self.inventory_scroll_offset += 1
+                    elif event.key == pygame.K_UP:
+                        self.inventory_scroll_offset = max(0, self.inventory_scroll_offset - 1)
+                    elif event.key == pygame.K_ESCAPE:
+                        self.inventoryOpen = False
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    if event.button == 4:  # Mouse wheel up
+                        self.inventory_scroll_offset = max(0, self.inventory_scroll_offset - 1)
+                    elif event.button == 5:  # Mouse wheel down
+                        self.inventory_scroll_offset += 1
+                continue  # Skip further event handling if inventory is open
+
+            # Tutorial and intro dialog handling
+            if event.type == pygame.KEYDOWN:
                 if self.show_tutorial:
-                    if event.key == pygame.K_RETURN:  # Exit tutorial on ENTER
+                    if event.key == pygame.K_RETURN:
                         self.show_tutorial = False
                 elif self.showing_intro_dialog and event.key == pygame.K_RETURN:
                     self.intro_dialog_index += 1
@@ -429,21 +448,18 @@ class Game:
                         self.showing_intro_dialog = False
                 else:
                     if event.key == pygame.K_TAB:
-                        self.handle_dialog()  # Advance dialog on Tab key
+                        self.handle_dialog()
                     elif event.key == pygame.K_RETURN:
                         if self.check_location():
                             return
                     elif event.key == pygame.K_ESCAPE:
-                        if self.inventoryOpen:  
-                            self.inventoryOpen = False
-                        else: 
-                            self.show_tutorial = True
-                    elif event.key == pygame.K_e:  
+                        self.show_tutorial = True
+                    elif event.key == pygame.K_e:
                         self.handle_item_pickup()
-                    elif event.key == pygame.K_c: 
+                    elif event.key == pygame.K_c:
                         self.inventoryOpen = not self.inventoryOpen
                     elif event.key == pygame.K_g:
-                        self.guessing_mode = not self.guessing_mode                  
+                        self.guessing_mode = not self.guessing_mode
     def handle_guess(self):
         print(f"Player's guess: NPC={self.guess['npc']}, Weapon={self.guess['weapon']}, Location={self.guess['location']}")
         print(f"Correct values: NPC={self.murderer}, Weapon={self.weapon}, Location={self.weapon_location}")
@@ -497,8 +513,6 @@ class Game:
 
         pygame.display.flip()  # Update the display    
     
-
-
     def draw_intro_dialog(self, screen):
         if self.showing_intro_dialog:
             font = pygame.font.Font("assets/pixelFont.otf", 32)
@@ -843,7 +857,10 @@ class Game:
                 self.screen.blit(sprite.image, (sprite.rect.x - self.camera_offset[0], sprite.rect.y - self.camera_offset[1]))             
     def draw_gui(self):
         if self.inventoryOpen:
-            self.inventory.display(self.screen, self.dialog_font, SCREEN_WIDTH, SCREEN_HEIGHT)
+            self.inventory.display(
+                self.screen, self.dialog_font, SCREEN_WIDTH, SCREEN_HEIGHT,
+                scroll_offset=self.inventory_scroll_offset, max_lines=10
+            )
         
         for npc in self.npcList:
             if self.check_near_npc(self.player.rect, npc.rect):
